@@ -6,8 +6,6 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import os
 from queue import Queue
-from templates import get_head_template, get_content_template, get_tail_template
-
 
 crawl_queue = Queue()
 phantomjsdriver = None
