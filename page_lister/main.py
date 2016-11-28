@@ -1,4 +1,3 @@
-from selenium import webdriver
 import requests
 import re
 import argparse
@@ -8,7 +7,6 @@ import os
 from queue import Queue
 
 crawl_queue = Queue()
-phantomjsdriver = None
 
 
 class CrawlUnit:
@@ -39,33 +37,6 @@ def to_abs_path(base: str, link: str) -> str:
     return urljoin(base, link)
 
 
-def init_output_html(dest_root: str) -> None:
-    head_template = get_head_template()
-    with open(dest_root + "/index.html", "w", encoding="utf8") as file:
-        file.write(head_template)
-
-
-def write_one_output(dest_root: str, img_file_name: str, url: str,
-                     comment1: str="", comment2: str="") -> None:
-    img_file_path = "img/" + img_file_name
-    content_template = get_content_template()
-
-    content_template = content_template.replace("img-path", img_file_path)
-    content_template = content_template.replace("the-url", url)
-    content_template = content_template.replace("comment1", comment1)
-    content_template = content_template.replace("comment2", comment2)
-
-    with open(dest_root + "/index.html", "a", encoding="utf8") as file:
-        file.write(content_template)
-
-
-def write_tail(dest_root: str) -> None:
-    tail_template = get_tail_template()
-
-    with open(dest_root + "/index.html", "a", encoding="utf8") as file:
-        file.write(tail_template)
-
-
 def save_information(dest_root: str,
                      url,
                      originurl: str,
@@ -73,14 +44,10 @@ def save_information(dest_root: str,
     r = requests.get(url)
     img_file_name = str(cnt).zfill(4) + ".png"
     img_file_path = dest_root + "/img/" + img_file_name
-    phantomjsdriver.get(url)
-    phantomjsdriver.save_screenshot(img_file_path)
+    # phantomjsdriver.get(url)
+    # phantomjsdriver.save_screenshot(img_file_path)
 
-    title = phantomjsdriver.title
-
-    write_one_output(dest_root, img_file_name, url,
-                     "title: " + title, "statuscode: {}".format(r.status_code))
-
+    # title = phantomjsdriver.title
 
 def get_html(url):
     r = requests.get(url)
@@ -163,7 +130,6 @@ def crawl(dest_root: str, url: str, root: str, depth: int) -> None:
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='特定ドメイン以下のリンクを列挙しスクリーンショットを取得します')
-    parser.add_argument("-phantomjs-path", help="PhantomJS バイナリへのパス。パスが通っていれば指定する必要はありません", default=None)
     parser.add_argument('-start', help='出発するURL。', required=True)
     parser.add_argument('-depth', help='探索する深さ。指定しなければ1024(事実上の無限)が指定されます', default=1024, type=int)
     parser.add_argument("-root", help='探索するURLのルート', required=True)
@@ -189,27 +155,11 @@ def main():
     index_path = "{}/index.html".format(dest_root)
     img_root_path = "{}/img/".format(dest_root)
 
-    if args.phantomjs_path:
-        try:
-            phantomjsdriver = webdriver.PhantomJS(args.phantomjs_path)
-        except Exception as e:
-            print(e)
-            print("phantomjs の起動に失敗. -phantomjs-path が正しくない?")
-    else:
-        try:
-            phantomjsdriver = webdriver.PhantomJS()
-        except Exception as e:
-            print(e)
-            print("phantomjs の起動に失敗. -phantomjs-path を設定してください")
-
-    init_output_html(dest_root)
-
     try:
         crawl(dest_root, args.start, args.root, args.depth)
     except Exception as e:
         print(e)
     finally:
-        write_tail(dest_root)
         phantomjsdriver.close()
 
 if __name__ == '__main__':
