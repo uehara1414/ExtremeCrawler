@@ -37,18 +37,6 @@ def to_abs_path(base: str, link: str) -> str:
     return urljoin(base, link)
 
 
-def save_information(dest_root: str,
-                     url,
-                     originurl: str,
-                     cnt: int) -> None:
-    r = requests.get(url)
-    img_file_name = str(cnt).zfill(4) + ".png"
-    img_file_path = dest_root + "/img/" + img_file_name
-    # phantomjsdriver.get(url)
-    # phantomjsdriver.save_screenshot(img_file_path)
-
-    # title = phantomjsdriver.title
-
 def get_html(url):
     r = requests.get(url)
     return r.text
@@ -58,8 +46,8 @@ def get_href_links(base: str, html: str, root: str, extract_bad=True) -> set:
     soup = BeautifulSoup(html, "html.parser")
     hrefs = []
     for a in soup.find_all("a"):
-        href = a.get("href")
-        if href is None:
+        href = a.get("href", "")
+        if not href:
             continue
         hrefs.append(href)
 
@@ -106,7 +94,7 @@ def extract_bad_urls(urls: list, base: str, root: str) -> list:
     return ret
 
 
-def crawl(root: str, url: str, depth: int) -> None:
+def crawl(root:str, url:str, depth:int) -> None:
     crawl_queue.put(CrawlUnit(url, url, 0))
     searched_urlset = set()
     crawled_cnt = 0
@@ -129,7 +117,7 @@ def crawl(root: str, url: str, depth: int) -> None:
 
 
 def parse_arguments() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description='特定ドメイン以下のリンクを列挙しスクリーンショットを取得します')
+    parser = argparse.ArgumentParser(description='List up all pages in a website.')
     parser.add_argument('domain', help='The domain whose pages are listed up. example: https://www.google.co.jp/')
     parser.add_argument('--start', help='The path which the search starts. example: /index.html defalut: /', default='/')
     parser.add_argument('--depth', help='search depth', default=1024, type=int)
