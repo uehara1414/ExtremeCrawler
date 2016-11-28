@@ -106,34 +106,33 @@ def extract_bad_urls(urls: list, base: str, root: str) -> list:
     return ret
 
 
-def crawl(dest_root: str, url: str, root: str, depth: int) -> None:
+def crawl(root: str, url: str, depth: int) -> None:
     crawl_queue.put(CrawlUnit(url, url, 0))
-    urlset = set()
+    searched_urlset = set()
     crawled_cnt = 0
     while not crawl_queue.empty():
         crawled_cnt += 1
         unit = crawl_queue.get_nowait()
 
         print("{}/{}: {}".format(crawled_cnt, crawl_queue.qsize() + crawled_cnt, unit))
-        save_information(dest_root, unit.url, unit.origin_url, crawled_cnt)
 
         html = get_html(unit.url)
         urls = get_href_links(unit.url, html, root)
 
         if unit.depth >= depth:
             continue
+
         for the_url in urls:
-            if the_url not in urlset:
+            if the_url not in searched_urlset:
                 crawl_queue.put(CrawlUnit(the_url, unit.url, unit.depth + 1))
-                urlset.add(the_url)
+                searched_urlset.add(the_url)
 
 
 def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='特定ドメイン以下のリンクを列挙しスクリーンショットを取得します')
-    parser.add_argument('-start', help='出発するURL。', required=True)
-    parser.add_argument('-depth', help='探索する深さ。指定しなければ1024(事実上の無限)が指定されます', default=1024, type=int)
-    parser.add_argument("-root", help='探索するURLのルート', required=True)
-    parser.add_argument("-dest", help="生成先ディレクトリ名。", default="output")
+    parser.add_argument('domain', help='The domain whose pages are listed up. example: https://www.google.co.jp/')
+    parser.add_argument('--start', help='The path which the search starts. example: /index.html defalut: /', default='/')
+    parser.add_argument('--depth', help='search depth', default=1024, type=int)
 
     args = parser.parse_args()
 
@@ -145,22 +144,16 @@ def init_destination(dest_path: str):
 
 
 def main():
-    global phantomjsdriver
     args = parse_arguments()
 
     # 保存先ディレクトリの作成
-    dest_root = args.dest
-    init_destination(dest_root)
-
-    index_path = "{}/index.html".format(dest_root)
-    img_root_path = "{}/img/".format(dest_root)
+    root = args.domain
+    start = to_abs_path(root, args.start)
 
     try:
-        crawl(dest_root, args.start, args.root, args.depth)
+        crawl(root, start, args.depth)
     except Exception as e:
         print(e)
-    finally:
-        phantomjsdriver.close()
 
 if __name__ == '__main__':
     main()
