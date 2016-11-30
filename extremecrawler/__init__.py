@@ -1,1 +1,1 @@
-from .ExtremeCrawler import ExtremeCrawler
+from .extreme_crawler import ExtremeCrawler

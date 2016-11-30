@@ -1,6 +1,8 @@
 import argparse
 from urllib.parse import urljoin
-from ExtremeCrawler import ExtremeCrawler
+
+from .extreme_crawler import ExtremeCrawler
+
 
 
 def parse_arguments():
@@ -20,7 +22,7 @@ def main():
     root = args.domain
     start = urljoin(root, args.start)
 
-    crawler = ExtremeCrawler(root, url=start, max_depth=args.depth)
+    crawler = ExtremeCrawler(root, index=start, max_depth=args.depth)
 
     for x in crawler.crawl():
         print(x)

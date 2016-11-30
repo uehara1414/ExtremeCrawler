@@ -1,8 +1,10 @@
 from queue import PriorityQueue
+from urllib.parse import urljoin
 
 import requests
-from exceptions import NotHtmlError
-from CrawlUnit import CrawlUnit
+
+from .exceptions import NotHtmlError
+from .crawl_unit import CrawlUnit
 
 
 class ExtremeCrawler:
@@ -14,17 +16,21 @@ class ExtremeCrawler:
     """
 
 
-    def __init__(self, domain:str, url:str='/', max_depth:int=1024):
+    def __init__(self, domain:str, index:str='/', max_depth:int=1024):
         self.domain = domain
-        self.url = url
         self.max_depth = max_depth
 
         self.crawl_queue = PriorityQueue()
         self.crawled_url_set = set()
 
+        if not index.startswith('http'):
+            self.index = urljoin(domain, index)
+        else:
+            self.index = index
+
 
     def crawl(self):
-        self.crawl_queue.put(CrawlUnit(self.domain, self.url, 0))
+        self.crawl_queue.put(CrawlUnit(self.domain, self.index, 0))
         while not self.crawl_queue.empty():
             crawl_unit = self.crawl_queue.get_nowait()
 
@@ -32,6 +38,7 @@ class ExtremeCrawler:
                 continue
 
             if crawl_unit.depth == self.max_depth:
+                self.crawled_url_set.add(crawl_unit.url)
                 yield crawl_unit.url
                 continue
 
@@ -49,9 +56,8 @@ class ExtremeCrawler:
 
             self.crawled_url_set.add(crawl_unit.url)
 
-            if crawl_unit.depth < self.max_depth:
-                for url in links:
-                    if not url in self.crawled_url_set:
-                        self.crawl_queue.put(CrawlUnit(self.domain, url, crawl_unit.depth+1))
+            for url in links:
+                if not url in self.crawled_url_set:
+                    self.crawl_queue.put(CrawlUnit(self.domain, url, crawl_unit.depth+1))
 
             yield crawl_unit.url
