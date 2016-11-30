@@ -12,7 +12,6 @@ class CrawlUnit:
         self.url = url
         self.depth = depth
 
-
     def get_href_links(self):
         try:
             res = requests.head(self.url)
@@ -23,7 +22,6 @@ class CrawlUnit:
             raise NotHtmlError()
 
         res = requests.get(self.url, timeout=10)
-
 
         soup = BeautifulSoup(res.text, "html.parser")
         hrefs = []
@@ -41,27 +39,23 @@ class CrawlUnit:
 
         return link_set
 
-
     def to_abs_path(self, href):
         if href.startswith("http"):
             return href
 
         if href.startswith("//"):
             if "https://" in self.base:
-               return "https:" + href
+                return "https:" + href
             else:
                 return "http:" + href
 
         return urljoin(self.base, href)
 
-
     def is_html(self, response) -> bool:
         return 'text/html' in response.headers['Content-Type']
 
-
     def __lt__(self, other):
         return self.depth < other.depth
-
 
     def __le__(self, other):
         return self.depth <= other.depth

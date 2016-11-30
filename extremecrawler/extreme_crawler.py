@@ -15,7 +15,6 @@ class ExtremeCrawler:
     depth: now depth.
     """
 
-
     def __init__(self, domain:str, index:str='/', max_depth:int=1024):
         self.domain = domain
         self.max_depth = max_depth
@@ -27,7 +26,6 @@ class ExtremeCrawler:
             self.index = urljoin(domain, index)
         else:
             self.index = index
-
 
     def crawl(self):
         self.crawl_queue.put(CrawlUnit(self.domain, self.index, 0))
@@ -57,7 +55,7 @@ class ExtremeCrawler:
             self.crawled_url_set.add(crawl_unit.url)
 
             for url in links:
-                if not url in self.crawled_url_set:
+                if url not in self.crawled_url_set:
                     self.crawl_queue.put(CrawlUnit(self.domain, url, crawl_unit.depth+1))
 
             yield crawl_unit.url
