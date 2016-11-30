@@ -2,6 +2,7 @@ import argparse
 from urllib.parse import urljoin
 from ExtremeCrawler import ExtremeCrawler
 
+
 def parse_arguments():
     parser = argparse.ArgumentParser(description='List up all pages in a website.')
     parser.add_argument('domain', help='The domain whose pages are listed up. example: https://www.google.co.jp/')
@@ -23,6 +24,7 @@ def main():
 
     for x in crawler.crawl():
         print(x)
+
 
 if __name__ == '__main__':
     main()

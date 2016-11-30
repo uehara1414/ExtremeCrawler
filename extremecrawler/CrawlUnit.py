@@ -65,4 +65,3 @@ class CrawlUnit:
 
     def __le__(self, other):
         return self.depth <= other.depth
-
