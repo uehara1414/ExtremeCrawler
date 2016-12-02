@@ -19,35 +19,35 @@ class CrawlUnit:
         self.depth = depth
 
         self.content_type = ""
+        self.link_set = set()
+        self.is_valid = False
 
-    def crawl(self, crawl_html: bool = False) -> tuple:
+    def crawl(self, crawl_html: bool = True):
         """リクエストを飛ばし、結果を返す
 
         与えられたリンクに対し、まずHEADリクエストを送り、Content-Type を判断する
         Content-Type が text/html 以外なら、スクレピング不可なので自URLを返す。
         Content-Type が text/html であるなら、スクレイピングを実行して全リンクを取得し返す。
 
-        :return: ジェネレータです。フィルター条件に合致し、urlとして有効であればそのurlを逐次返します。
         """
-        url = ""
 
         try:
             head_res = requests.head(self.url)
             self.content_type = head_res.headers.get("Content-Type")
-        except requests.exceptions.InvalidSchema:
-            return ("", set())
+        except (requests.exceptions.InvalidSchema, requests.exceptions.ConnectionError):
+            return
 
-        if not self.is_html(head_res):
-            return (self.url, set())
+        self.is_valid = True
 
-        res = requests.get(self.url, timeout=10)
+        if not self.is_html(head_res) or not crawl_html:
+            return
+
+        res = requests.get(self.url, timeout=5)
 
         soup = BeautifulSoup(res.text, "html.parser")
 
-        link_set = self._get_href_links(soup)
-        link_set.update(self._get_image_srcs(soup))
-
-        return url, link_set
+        self.link_set = self._get_href_links(soup)
+        self.link_set.update(self._get_image_srcs(soup))
 
     def to_abs_path(self, href):
         if href.startswith("http"):
@@ -62,10 +62,10 @@ class CrawlUnit:
         return urljoin(self.base, href)
 
     def get_url_if_valid(self):
-        return ""
+        return self.url if self.is_valid else ''
 
     def get_link_set(self):
-        return set()
+        return self.link_set
 
     def _get_href_links(self, soup: BeautifulSoup):
         href_set = set()
@@ -88,7 +88,8 @@ class CrawlUnit:
                 src_set.add(src)
         return src_set
 
-    def is_html(self, response) -> bool:
+    @staticmethod
+    def is_html(response) -> bool:
         return 'text/html' in response.headers['Content-Type']
 
     def __lt__(self, other):

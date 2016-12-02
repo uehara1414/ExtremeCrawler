@@ -1,5 +1,6 @@
 from queue import PriorityQueue
 from urllib.parse import urljoin
+import sys
 
 import requests
 
@@ -49,29 +50,39 @@ class ExtremeCrawler:
             if self._is_already_crawled(crawl_unit.url):
                 continue
 
-            if crawl_unit.depth == self.max_depth:
-                self.crawled_url_set.add(crawl_unit.url)
-                yield crawl_unit.url
-                continue
+            crawl_html = crawl_unit.depth != self.max_depth
 
             try:
-                crawl_unit.crawl()
+                crawl_unit.crawl(crawl_html=crawl_html)
             except (requests.ConnectionError, TimeoutError):
-                print('Connection error has occurred. Retry to access {} later.'.format(crawl_unit.url))
+                print('Connection error has occurred. Retry to access {} later.'.format(crawl_unit.url), file=sys.stderr)
                 self.crawl_queue.put(CrawlUnit(self.domain, crawl_unit.url, crawl_unit.depth))
+                continue
 
             self.crawled_url_set.add(crawl_unit.url)
 
             for url in self._filter_crawled_urls(crawl_unit.get_link_set()):
-                self.crawl_queue.put(CrawlUnit(self.domain, url, crawl_unit.depth+1))
+                if self._is_the_same_domain(url):
+                    self.crawl_queue.put(CrawlUnit(self.domain, url, crawl_unit.depth+1))
 
-            for content_type in crawl_unit.content_type:
-                if content_type in content_filter:
-                    if crawl_unit.get_url_if_valid():
-                        yield crawl_unit.get_url_if_valid()
+            if self._is_valid_content_type(crawl_unit, content_filter):
+                if crawl_unit.get_url_if_valid():
+                    yield crawl_unit.get_url_if_valid()
 
     def _is_already_crawled(self, url):
         return url in self.crawled_url_set
 
     def _filter_crawled_urls(self, url_set: set):
-        return filter(lambda x: x in self.crawled_url_set, url_set)
+        for url in url_set:
+            if not self._is_already_crawled(url):
+                yield url
+
+    def _is_the_same_domain(self, url: str):
+        return url.startswith(self.domain)
+
+    @staticmethod
+    def _is_valid_content_type(crawl_unit: CrawlUnit, content_filter: list):
+        for content_type in crawl_unit.content_type:
+            if content_type in content_filter:
+                return True
+        return False

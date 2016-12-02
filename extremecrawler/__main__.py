@@ -26,7 +26,7 @@ def main():
 
     crawler = ExtremeCrawler(root, index=start, max_depth=args.depth)
 
-    for x in crawler.crawl():
+    for x in crawler.crawl(content_filter="text/html"):
         print(x)
 
 
