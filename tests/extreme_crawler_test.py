@@ -18,6 +18,7 @@ class ExtremeCrawlerTest(unittest.TestCase):
 
     def test_crawl(self):
         crawler = ExtremeCrawler("http://www.google.co.jp/", index="/", max_depth=1)
+        self.assertTrue(isinstance(crawler, ExtremeCrawler))
         crawler.crawl()
 
     def test_crawl_with_content_filter(self):
@@ -42,6 +43,5 @@ class ExtremeCrawlerTest(unittest.TestCase):
 
     def test_filter_crawled_urls(self):
         crawler = ExtremeCrawler("http://www.google.co.jp/", index="/", max_depth=1)
-        urls = list(crawler.crawl())
         filtered = crawler._filter_crawled_urls({"http://www.google.co.jp/", "https://github.com/"})
         self.assertEqual(set(filtered), {"http://www.google.co.jp/"})
