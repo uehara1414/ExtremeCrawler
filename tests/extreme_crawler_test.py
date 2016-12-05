@@ -1,9 +1,7 @@
 import unittest
-from unittest.mock import MagicMock
-
 import requests
-
 from extremecrawler import ExtremeCrawler
+
 
 class ExtremeCrawlerTest(unittest.TestCase):
 
