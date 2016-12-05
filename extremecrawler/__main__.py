@@ -1,34 +1,20 @@
-import argparse
+import sys
 from urllib.parse import urljoin
 
 from .extreme_crawler import ExtremeCrawler
-
-
-def parse_arguments():
-    parser = argparse.ArgumentParser(description='List up all pages in a website.')
-    parser.add_argument('domain',
-                        help='The domain whose pages are listed up. example: https://www.google.co.jp/')
-    parser.add_argument('--start',
-                        help='The path which the search starts. example: /index.html defalut: /', default='/')
-    parser.add_argument('--depth',
-                        help='search depth', default=1024, type=int)
-
-    args = parser.parse_args()
-
-    return args
+from .parse_arguments import parse_arguments
 
 
 def main():
-    args = parse_arguments()
+    args = parse_arguments(sys.argv[1:])
 
     root = args.domain
-    start = urljoin(root, args.start)
+    index = urljoin(root, args.index)
 
-    crawler = ExtremeCrawler(root, index=start, max_depth=args.depth)
+    crawler = ExtremeCrawler(root, index=index, max_depth=args.depth)
 
     for x in crawler.crawl(content_filter="text/html"):
         print(x)
-
 
 if __name__ == '__main__':
     main()
