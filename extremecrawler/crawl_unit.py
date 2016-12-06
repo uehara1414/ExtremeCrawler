@@ -32,17 +32,21 @@ class CrawlUnit:
         """
 
         try:
-            head_res = requests.head(self.url)
+            head_res = requests.head(self.url, timeout=5)
             self.content_type = head_res.headers.get("Content-Type")
         except (requests.exceptions.InvalidSchema, requests.exceptions.ConnectionError):
-            return
+            try:
+                head_res = requests.get(self.url, timeout=5)
+                self.content_type = head_res.headers.get("Content-Type")
+            except (requests.exceptions.InvalidSchema, requests.exceptions.ConnectionError):
+                return
 
         self.is_valid = True
 
         if not self.is_html(head_res) or not crawl_html:
             return
 
-        res = requests.get(self.url, timeout=5)
+        res = requests.get(self.url, timeout=10)
 
         soup = BeautifulSoup(res.text, "html.parser")
 
