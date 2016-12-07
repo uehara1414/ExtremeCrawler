@@ -17,7 +17,7 @@ class ExtremeCrawler:
 
     """
 
-    def __init__(self, domain: str, index: str='/', max_depth: int=1024, image_only=False):
+    def __init__(self, domain: str, index: str='/', max_depth: int=1024):
         """
 
         :param domain: 探索を行うドメイン名。このドメイン以下のコンテンツのみを収集します。
@@ -40,7 +40,7 @@ class ExtremeCrawler:
 
         if content_filter is None:
             content_filter = ['text/html']
-        elif isinstance(content_filter, str):
+        elif not isinstance(content_filter, str):
             content_filter = [content_filter]
 
         self.crawl_queue.put(CrawlUnit(self.domain, self.index, 0))
@@ -54,12 +54,8 @@ class ExtremeCrawler:
 
             try:
                 crawl_unit.crawl(crawl_html=crawl_html)
-            except (requests.ConnectionError):
+            except (requests.ConnectionError, TimeoutError):
                 print('Connection error has occurred. Retry to access {} later.'.format(crawl_unit.url), file=sys.stderr)
-                self.crawl_queue.put(CrawlUnit(self.domain, crawl_unit.url, crawl_unit.depth))
-                continue
-            except (TimeoutError, requests.exceptions.ReadTimeout):
-                print('Connection time out. Retry to access {} later.'.format(crawl_unit.url), file=sys.stderr)
                 self.crawl_queue.put(CrawlUnit(self.domain, crawl_unit.url, crawl_unit.depth))
                 continue
 

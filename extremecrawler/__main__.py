@@ -13,9 +13,7 @@ def main():
 
     crawler = ExtremeCrawler(root, index=index, max_depth=args.depth)
 
-    content_filter = 'image' if args.image_only else 'html'
-
-    for x in crawler.crawl(content_filter=content_filter):
+    for x in crawler.crawl(content_filter="text/html"):
         print(x)
 
 if __name__ == '__main__':
