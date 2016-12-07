@@ -1,2 +1,3 @@
 class NotHtmlError(BaseException):
     pass
+
